@@ -5,6 +5,7 @@ import {HttpClient} from '@angular/common/http';
 import {Observable} from 'rxjs';
 import Speech from 'speak-tts';
 import {  ChangeDetectorRef } from '@angular/core';
+import { Vague } from './../models/Vague';
 
 @Component({
   selector: 'app-home',
@@ -13,6 +14,7 @@ import {  ChangeDetectorRef } from '@angular/core';
 })
 export class HomePage {
   orders = [];
+  vagues = [];
   tmp: Observable<any>;
   speech = new Speech();
   mic: any;
@@ -53,6 +55,8 @@ export class HomePage {
           console.log(data);
           const order = JSON.parse(data.data);
           this.orders.push(order.order);
+          this.addOrderToVague(order.order);
+          console.log(this.vagues);
         });
   }
 
@@ -176,5 +180,37 @@ export class HomePage {
         //this.orders = v ;
       });
   }
+
+  addOrderToVague(order) {
+    console.log(this.vagues.length);
+    if(this.vagues.length === 0) {
+        let vague: Vague = new Vague;
+        vague.order1 = null;
+        vague.order2 = null;
+        vague.order1 = order;
+        this.vagues.push(vague);
+    }
+    else {
+        if(this.vagues[this.vagues.length - 1].order1 === null) {
+          this.vagues[this.vagues.length - 1].order1 = order;
+        }
+        else if(this.vagues[this.vagues.length - 1].order2 === null) {
+          this.vagues[this.vagues.length - 1].order2 = order;
+        }
+
+        else {
+          let vague: Vague = new Vague;
+          vague.order1 = null;
+          vague.order2 = null;
+          vague.order1 = order;
+          this.vagues.push(vague);
+        }
+    } 
+}
+
+isRushHour(): boolean {
+    if(this.orders.length > 2) return true;
+    return false;
+}
 
 }
