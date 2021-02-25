@@ -29,7 +29,7 @@
   </ion-header> -->
 
   <div *ngFor="let order of this.orders " >
-    <ion-card [class.active]="this.orders.indexOf(order) === 0">
+    <ion-card [class.active]="this.orders.indexOf(order) === this.selectedItem" (click)="selectItem(order)">
       <div class="ion-card-item">
         <ion-item class="ion-activated">
           Entrée : {{order?.repas.entree}}
@@ -52,7 +52,7 @@
         </ion-item>
       </div>
 
-      <ion-button *ngIf="this.orders.indexOf(order) === 0" class="ready-button" (click)="ready(order)">Ready</ion-button>
+      <ion-button *ngIf="this.orders.indexOf(order) === this.selectedItem" class="ready-button" (click)="ready(order)">Ready</ion-button>
 
     </ion-card>
   </div>
@@ -80,7 +80,7 @@
   <div *ngFor="let vague of this.vagues " >
     <ion-card [class.active]="this.vagues.indexOf(vague) === 0">
       <div class="ion-card-item">
-        Sandwichs : 
+        Sandwichs :
         <ion-item class="ion-activated">
           {{vague?.order1.repas.plat}}
         </ion-item>
@@ -91,7 +91,7 @@
         </ion-item>
       </div>
 
-      <ion-button *ngIf="this.vagues.indexOf(vague) === 0" class="ready-button" (click)="ready(vague)">Ready</ion-button>
+      <ion-button *ngIf="this.vagues.indexOf(vague) === 0" class="ready-button" (click)="readyVague(vague)">Ready</ion-button>
 
     </ion-card>
   </div>

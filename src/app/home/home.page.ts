@@ -19,6 +19,9 @@ export class HomePage {
   speech = new Speech();
   mic: any;
   micToggle =  false;
+  selectedItem = 0;
+  order: Commande;
+
   constructor(private http: HttpClient, private sseService: SseService, private cdr: ChangeDetectorRef) {
     // let source = new EventSource('http://localhost:9428/api/repas/sse');
     // source.addEventListener('message', aString => console.log(aString.data), false);
@@ -48,6 +51,7 @@ export class HomePage {
       });
       this.http.get<any[]>('http://localhost:9428/api/order').subscribe( v => {
       this.orders = v ;
+      this.order = this.orders[this.selectedItem];
     });
       this.sseService
         .getServerSentEvent('http://localhost:9428/api/order/stream')
@@ -61,7 +65,6 @@ export class HomePage {
   }
 
   async textToSpeech(){
-      let order = this.orders[0];
 
       this.micToggle = !this.micToggle;
       if (!this.micToggle){
@@ -89,37 +92,36 @@ export class HomePage {
                   switch (transcript){
 
                       case 'repas':
-                          const text = 'entrée : ' + order.repas.entree + '.'
-                              + 'plat : ' + order.repas.plat + '.'
-                              + 'dessert : ' + order.repas.dessert + '.'
-                              + 'boisson : ' + order.repas.boisson + '.';
+                          const text = 'entrée : ' + this.order.repas.entree + ' ,\n '
+                            + 'plat : ' + this.order.repas.plat + ' ,\n '
+                            + 'dessert : ' + this.order.repas.dessert + ' ,\n '
+                            + 'boisson : ' + this.order.repas.boisson + ' ,\n ';
                           this.speak(text);
                           break;
 
                       case 'entrée':
-                          console.log(order.repas);
-                          this.speak(order.repas.entree);
+                          this.speak(this.order.repas.entree);
                           break;
 
                       case 'plat':
-                          this.speak(order.repas.plat);
+                          this.speak(this.order.repas.plat);
                           break;
 
                       case 'dessert':
-                          this.speak(order.repas.dessert);
+                          this.speak(this.order.repas.dessert);
                           break;
 
                       case 'boisson':
-                          this.speak(order.repas.boisson);
+                          this.speak(this.order.repas.boisson);
                           break;
 
                       case 'suivant':
-                          this.ready(order);
-                          order = this.orders[0];
-                          const text2 = 'entrée : ' + order.repas.entree + '.'
-                              + 'plat : ' + order.repas.plat + '.'
-                              + 'dessert : ' + order.repas.dessert + '.'
-                              + 'boisson : ' + order.repas.boisson + '.';
+                          this.ready(this.order);
+                          this.order = this.orders[this.selectedItem];
+                          const text2 = 'entrée : ' + this.order.repas.entree + ' ,\n '
+                              + 'plat : ' + this.order.repas.plat + ' ,\n '
+                              + 'dessert : ' + this.order.repas.dessert + ' ,\n '
+                              + 'boisson : ' + this.order.repas.boisson + ' ,\n ';
                           this.speak(text2);
                           break;
 
@@ -139,7 +141,7 @@ export class HomePage {
   }
 
 
- speak(textToSpeak: string){
+ speak(textToSpeak: any){
       this.micToggle = !this.micToggle;
       console.log('speaaaaak: ' + textToSpeak);
       /*this.speech.speak({
@@ -172,13 +174,36 @@ export class HomePage {
   ready(order: Commande){
       console.log(order);
       const index = this.orders.indexOf(order);
+      if ( index === (this.orders.length - 1)){
+        this.selectedItem = this.selectedItem - 1;
+      }
       this.orders.splice(index, 1);
+      this.order = this.orders[this.selectedItem];
       this.cdr.detectChanges();
 
       this.http.post<any[]>('http://localhost:9428/api/user', order).subscribe( v => {
           console.log(v);
         //this.orders = v ;
       });
+  }
+
+  readyVague(vague: Vague){
+    console.log(vague);
+    const index = this.orders.indexOf(vague);
+    if ( index === (this.orders.length - 1)){
+      this.selectedItem = this.selectedItem - 1;
+    }
+    this.vagues.splice(index, 1);
+    // this.order = this.orders[this.selectedItem];
+    this.cdr.detectChanges();
+
+    this.http.post<any[]>('http://localhost:9428/api/user/vague', vague.order1).subscribe( v => {
+      console.log(v);
+    });
+
+    this.http.post<any[]>('http://localhost:9428/api/user/vague', vague.order2).subscribe( v => {
+      console.log(v);
+    });
   }
 
   addOrderToVague(order) {
@@ -205,12 +230,17 @@ export class HomePage {
           vague.order1 = order;
           this.vagues.push(vague);
         }
-    } 
+    }
 }
 
 isRushHour(): boolean {
     if(this.orders.length > 2) return true;
     return false;
 }
+
+  selectItem(order: Commande){
+    this.selectedItem = this.orders.indexOf(order);
+    this.order = this.orders[this.selectedItem];
+  }
 
 }
