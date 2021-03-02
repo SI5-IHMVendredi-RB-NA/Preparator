@@ -1,7 +1,7 @@
 <ion-header [translucent]="true">
   <ion-toolbar>
     <ion-title>
-      Preparateur Principal
+      Preparateur Principal - Robin -
     </ion-title>
   </ion-toolbar>
 </ion-header>
@@ -13,7 +13,7 @@
   </ion-item>
 </ion-card> -->
 
-<ion-content [fullscreen]="true" *ngIf = "!isRushHour()">
+<ion-content [fullscreen]="true" *ngIf = "!rushHour">
   <ion-fab vertical="center" horizontal="end" slot="fixed">
     <ion-fab-button color="danger" *ngIf="!micToggle" (click)="textToSpeech()">
       <ion-icon style="height: 50px; width: 50px" name="mic-off-outline"   ></ion-icon>
@@ -62,12 +62,12 @@
 </ion-content>
 
 
-<ion-content [fullscreen]="true" *ngIf = "isRushHour()">
+<ion-content [fullscreen]="true" *ngIf = "rushHour">
   <ion-fab vertical="center" horizontal="end" slot="fixed">
-    <ion-fab-button color="danger" *ngIf="!micToggle" (click)="textToSpeech()">
+    <ion-fab-button color="danger" *ngIf="!micToggle" (click)="textToSpeechVagues()">
       <ion-icon style="height: 50px; width: 50px" name="mic-off-outline"   ></ion-icon>
     </ion-fab-button>
-    <ion-fab-button *ngIf="micToggle" (click)="textToSpeech()">
+    <ion-fab-button *ngIf="micToggle" (click)="textToSpeechVagues()">
       <ion-icon style="height: 50px; width: 50px" name="mic-outline" ></ion-icon>
     </ion-fab-button>
   </ion-fab>
@@ -81,14 +81,13 @@
     <ion-card [class.active]="this.vagues.indexOf(vague) === 0">
       <div class="ion-card-item">
         Sandwichs :
-        <ion-item class="ion-activated">
-          {{vague?.order1.repas.plat}}
+        <ion-item class="ion-activated" lines = "none">
+          {{getSandwichesPerVague(vague)}}
+
+          <br>
+          <br>
         </ion-item>
-        <br>
-        <br>
-        <ion-item class="ion-activated" *ngIf = "vague?.order2 !== null">
-          {{vague?.order2.repas.plat}}
-        </ion-item>
+
       </div>
 
       <ion-button *ngIf="this.vagues.indexOf(vague) === 0" class="ready-button" (click)="readyVague(vague)">Ready</ion-button>
