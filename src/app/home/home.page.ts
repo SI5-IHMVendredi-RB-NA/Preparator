@@ -32,6 +32,8 @@ export class HomePage {
   idVague = 0;
   textPerVague = {};
 
+  nbNewOrder = 0;
+
   constructor(private http: HttpClient, private sseService: SseService, private cdr: ChangeDetectorRef,
               private localNotification: LocalNotifications, private plt: Platform, public alertCtrl: AlertController) {
     // let source = new EventSource('http://localhost:9428/api/repas/sse');
@@ -69,7 +71,11 @@ export class HomePage {
           this.orderToVague(order.order);
           this.addOrderToDictionary(order.order);
           // this.isRushHour();
-          this.rushAlertConfirm();
+          this.nbNewOrder += 1;
+          if ( (this.nbNewOrder > this.MAX_VAGUES_ORDERS) && !this.rushHour ){
+            this.rushAlertConfirm();
+          }
+
           console.log(this.vagues);
         });
 
@@ -288,6 +294,7 @@ isRushHour(): void {
           role: 'cancel',
           cssClass: 'secondary',
           handler: (blah) => {
+            this.nbNewOrder = 0;
             console.log('Confirm Cancel: blah');
           }
         }, {
