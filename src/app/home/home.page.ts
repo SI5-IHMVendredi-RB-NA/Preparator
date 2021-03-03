@@ -7,8 +7,9 @@ import Speech from 'speak-tts';
 import {  ChangeDetectorRef } from '@angular/core';
 import { Vague } from './../models/Vague';
 import { ELocalNotificationTriggerUnit, LocalNotifications } from '@ionic-native/local-notifications/ngx';
-import { Platform } from '@ionic/angular';
+import {ModalController, Platform} from '@ionic/angular';
 import { $ } from 'protractor';
+import { AlertController } from '@ionic/angular';
 
 @Component({
   selector: 'app-home',
@@ -26,13 +27,13 @@ export class HomePage {
   order: Commande;
   MAX_VAGUES_ORDERS = 5;
   numberOrders = {};
-  rushHour: boolean = false;
+  rushHour = false;
   vagueDictionary = {};
   idVague = 0;
   textPerVague = {};
 
   constructor(private http: HttpClient, private sseService: SseService, private cdr: ChangeDetectorRef,
-    private localNotification: LocalNotifications, private plt: Platform) {
+              private localNotification: LocalNotifications, private plt: Platform, public alertCtrl: AlertController) {
     // let source = new EventSource('http://localhost:9428/api/repas/sse');
     // source.addEventListener('message', aString => console.log(aString.data), false);
    /*this.tmp = this.http.get<Repas[]>('http://localhost:9428/api/repas');
@@ -60,24 +61,25 @@ export class HomePage {
           console.error('An error occured while initializing : ', e);
       });
       this.sseService
-        .getServerSentEvent('http://10.189.174.180:9428/api/order/stream')
+        .getServerSentEvent('http://localhost:9428/api/order/stream')
         .subscribe(data => {
           console.log(data);
           const order = JSON.parse(data.data);
           this.orders.push(order.order);
           this.orderToVague(order.order);
           this.addOrderToDictionary(order.order);
-          this.isRushHour();
+          // this.isRushHour();
+          this.rushAlertConfirm();
           console.log(this.vagues);
         });
 
-        this.sseService
-        .getServerSentEvent('http://10.189.174.180:9428/api/preparator/stream')
+      this.sseService
+        .getServerSentEvent('http://localhost:9428/api/preparator/stream')
         .subscribe(data => {
           console.log(JSON.parse(data.data));
           console.log('Vague terminée par ' + JSON.parse(data.data).name_preparator);
-          //const order = JSON.parse(data.data);
-          //this.orders.push(order.order);
+          // const order = JSON.parse(data.data);
+          // this.orders.push(order.order);
           this.scheduleNotification('Vague terminée par ' + JSON.parse(data.data).name_preparator);
         });
   }
@@ -89,7 +91,7 @@ export class HomePage {
       text: message,
       data: {page: 'myPage'},
       trigger: {in: 5, unit: ELocalNotificationTriggerUnit.SECOND}
-    })
+    });
   }
 
   async textToSpeech(){
@@ -171,7 +173,7 @@ export class HomePage {
 
  speak(textToSpeak: any){
   this.micToggle = !this.micToggle;
-      console.log('speaaaaak: ' + textToSpeak);
+  console.log('speaaaaak: ' + textToSpeak);
       /*this.speech.speak({
           text: textToSpeak,
       }).then(() => {
@@ -179,12 +181,12 @@ export class HomePage {
       }).catch(e => {
           console.error('An error occurred :', e);
       });*/
-      this.speech.speak({
+  this.speech.speak({
          text: textToSpeak,
          listeners: {
              onstart: () => {
                 // console.log("Start utterance")
-                
+
              },
              onend: () => {
                  // console.log("End utterance");
@@ -210,9 +212,9 @@ export class HomePage {
       this.order = this.orders[this.selectedItem];
       this.cdr.detectChanges();
 
-      this.http.post<any[]>('http://10.189.174.180:9428/api/user', order).subscribe( v => {
+      this.http.post<any[]>('http://localhost:9428/api/user', order).subscribe( v => {
           console.log(v);
-        //this.orders = v ;
+        // this.orders = v ;
       });
   }
 
@@ -227,8 +229,8 @@ export class HomePage {
       this.http.post<any[]>('http://localhost:9428/api/user/vague', order).subscribe( v => {
         console.log(v);
       });
-    })
-    
+    });
+
     this.http.post<any[]>('http://localhost:9428/api/preparator/vague', {id: 1, name: 'Robin'}).subscribe( v => {
       console.log(v);
     });
@@ -236,23 +238,23 @@ export class HomePage {
 
   addOrderToVague(order) {
     console.log(this.vagues.length);
-    if(this.vagues.length === 0) {
-        let vague: Vague = new Vague;
+    if (this.vagues.length === 0) {
+        const vague: Vague = new Vague;
         vague.order1 = null;
         vague.order2 = null;
         vague.order1 = order;
         this.vagues.push(vague);
     }
     else {
-        if(this.vagues[this.vagues.length - 1].order1 === null) {
+        if (this.vagues[this.vagues.length - 1].order1 === null) {
           this.vagues[this.vagues.length - 1].order1 = order;
         }
-        else if(this.vagues[this.vagues.length - 1].order2 === null) {
+        else if (this.vagues[this.vagues.length - 1].order2 === null) {
           this.vagues[this.vagues.length - 1].order2 = order;
         }
 
         else {
-          let vague: Vague = new Vague;
+          const vague: Vague = new Vague;
           vague.order1 = null;
           vague.order2 = null;
           vague.order1 = order;
@@ -262,17 +264,44 @@ export class HomePage {
 }
 
 isRushHour(): void {
-    if(this.orders.length > this.MAX_VAGUES_ORDERS) {
+    if (this.orders.length > this.MAX_VAGUES_ORDERS) {
       this.rushHour = true;
       console.log('rushHour should be true');
-      console.log(this.rushHour)
-    } 
+      console.log(this.rushHour);
+    }
     else{
       this.rushHour = false;
       console.log('rushHour should be false');
-      console.log(this.rushHour)
+      console.log(this.rushHour);
     }
 }
+
+  async rushAlertConfirm() {
+    const alert = await this.alertCtrl.create({
+      cssClass: 'my-custom-class',
+      header: 'Mode Rush ?',
+      message: `Il y a une grande affluence de commandes en peu de temps, ${this.orders.length} actuellement.
+      Voulez vous passez en mode Rush ?`,
+      buttons: [
+        {
+          text: 'Cancel',
+          role: 'cancel',
+          cssClass: 'secondary',
+          handler: (blah) => {
+            console.log('Confirm Cancel: blah');
+          }
+        }, {
+          text: 'Okay',
+          handler: () => {
+            console.log('Confirm Okay');
+            this.isRushHour();
+          }
+        }
+      ]
+    });
+
+    await alert.present();
+  }
 
   selectItem(order: Commande){
     this.selectedItem = this.orders.indexOf(order);
@@ -302,14 +331,14 @@ isRushHour(): void {
                 .join('');
 
              */
-            if (this.micToggle){
+          if (this.micToggle){
                 const array = Array.from(event.results);
                 console.log(event.resultIndex);
                 const transcript = array[array.length - 1][0].transcript;
                 console.log(transcript);
                 console.log(event.results[0][0].transcript);
                 console.log(!(event.resultIndex == 1 && transcript == event.results[0][0].transcript));
-                if(! (event.resultIndex == 1 && transcript == event.results[0][0].transcript)) {
+                if (! (event.resultIndex == 1 && transcript == event.results[0][0].transcript)) {
                   const tempTranscript = transcript.replace(' ', '');
                   switch (tempTranscript){
 
@@ -343,20 +372,20 @@ isRushHour(): void {
 
 
 getNumberOfSandwiches(): string {
-  let result = "";
-  for(var key in this.numberOrders) {
+  let result = '';
+  for (const key in this.numberOrders) {
     const value = this.numberOrders[key];
-    result += value + "x " + key + "\n";
+    result += value + 'x ' + key + '\n';
   }
   return result;
 }
 
 getSandwichesPerVague(vague): string {
-  let result = "";
+  let result = '';
   console.log(this.vagueDictionary);
-  for(var key in this.vagueDictionary[vague.id]) {
+  for (const key in this.vagueDictionary[vague.id]) {
     const value = this.vagueDictionary[vague.id][key];
-    result += value + "x " + key + "\n";
+    result += value + 'x ' + key + '\n';
   }
   this.textPerVague[vague.id] = result;
   return result;
@@ -395,15 +424,15 @@ addOrderToDictionary(newOrder) {
   console.log(currentVague);
   currentVague.orders.forEach(order => {
     console.log(order === newOrder);
-    if(order === newOrder) {
-      if(this.vagueDictionary[currentVague.id] === undefined) {
+    if (order === newOrder) {
+      if (this.vagueDictionary[currentVague.id] === undefined) {
         this.vagueDictionary[currentVague.id] = {};
       }
-      if(this.vagueDictionary[currentVague.id][order.repas.plat + ""] === undefined) {
-        this.vagueDictionary[currentVague.id][order.repas.plat + ""] = 1;
+      if (this.vagueDictionary[currentVague.id][order.repas.plat + ''] === undefined) {
+        this.vagueDictionary[currentVague.id][order.repas.plat + ''] = 1;
       }
       else {
-        this.vagueDictionary[currentVague.id][order.repas.plat + ""] += 1;
+        this.vagueDictionary[currentVague.id][order.repas.plat + ''] += 1;
       }
     }
   });
@@ -413,17 +442,17 @@ addOrderToDictionary(newOrder) {
 
 orderToVague(order) {
   console.log(order);
-  if(this.vagues.length === 0) {
-    let vague: Vague = new Vague;
+  if (this.vagues.length === 0) {
+    const vague: Vague = new Vague;
     vague.id = this.idVague;
     vague.orders = [];
     vague.orders.push(order);
     this.vagues.push(vague);
     console.log(this.vagues);
   }
-  else if(this.vagues[this.vagues.length - 1].orders.length === this.MAX_VAGUES_ORDERS) {
-    this.idVague+= 1;
-    let vague: Vague = new Vague;
+  else if (this.vagues[this.vagues.length - 1].orders.length === this.MAX_VAGUES_ORDERS) {
+    this.idVague += 1;
+    const vague: Vague = new Vague;
     vague.id = this.idVague;
     vague.orders = [];
     vague.orders.push(order);
