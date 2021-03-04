@@ -85,11 +85,14 @@ export class HomePage {
       this.sseService
         .getServerSentEvent('http://localhost:9428/api/preparator/stream')
         .subscribe(data => {
-          console.log(JSON.parse(data.data));
-          console.log('Vague terminée par ' + JSON.parse(data.data).name_preparator);
-          // const order = JSON.parse(data.data);
-          // this.orders.push(order.order);
-          this.scheduleNotification('Vague terminée par ' + JSON.parse(data.data).name_preparator);
+          if (data.data !== 'rush'){
+            console.log(JSON.parse(data.data));
+            console.log('Vague terminée par ' + JSON.parse(data.data).name_preparator);
+            // const order = JSON.parse(data.data);
+            // this.orders.push(order.order);
+            this.scheduleNotification('Vague terminée par ' + JSON.parse(data.data).name_preparator);
+          }
+
         });
   }
 
@@ -306,6 +309,9 @@ isRushHour(): void {
           text: 'Okay',
           handler: () => {
             console.log('Confirm Okay');
+            this.http.post<any[]>('http://localhost:9428/api/preparator/rush', {rush: true}).subscribe( v => {
+             // console.log(v);
+            });
             this.isRushHour();
           }
         }
