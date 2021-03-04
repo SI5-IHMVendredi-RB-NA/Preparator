@@ -64,16 +64,19 @@ export class HomePage {
       });
       this.sseService
         .getServerSentEvent('http://localhost:9428/api/order/stream')
-        .subscribe(data => {
+        .subscribe(async data => {
           console.log(data);
           const order = JSON.parse(data.data);
           this.orders.push(order.order);
+          if (this.orders.length  === 1) {
+            this.selectItem(order.order);
+          }
           this.orderToVague(order.order);
           this.addOrderToDictionary(order.order);
           // this.isRushHour();
           this.nbNewOrder += 1;
           if ( (this.nbNewOrder > this.MAX_VAGUES_ORDERS) && !this.rushHour ){
-            this.rushAlertConfirm();
+            await this.rushAlertConfirm();
           }
 
           console.log(this.vagues);
@@ -136,6 +139,7 @@ export class HomePage {
                           break;
 
                       case 'entrée':
+                        console.log(this.order)
                           this.speak(this.order.repas.entree);
                           break;
 
@@ -220,6 +224,7 @@ export class HomePage {
 
       this.http.post<any[]>('http://localhost:9428/api/user', order).subscribe( v => {
           console.log(v);
+          this.nbNewOrder -= 1;
         // this.orders = v ;
       });
   }
@@ -283,6 +288,7 @@ isRushHour(): void {
 }
 
   async rushAlertConfirm() {
+    this.nbNewOrder = 0;
     const alert = await this.alertCtrl.create({
       cssClass: 'my-custom-class',
       header: 'Mode Rush ?',
@@ -294,7 +300,6 @@ isRushHour(): void {
           role: 'cancel',
           cssClass: 'secondary',
           handler: (blah) => {
-            this.nbNewOrder = 0;
             console.log('Confirm Cancel: blah');
           }
         }, {
